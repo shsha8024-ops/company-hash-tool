@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHA256 Company Hash Tool</title>
+<style>
+body{background:#0b1220;color:#e5e7eb;font-family:system-ui;padding:20px}
+.box{max-width:900px;margin:auto;background:#111827;padding:20px;border-radius:14px}
+label{font-weight:800;display:block;margin-top:12px}
+input,textarea,button{
+  width:100%;padding:12px;margin-top:6px;
+  border-radius:10px;border:1px solid #243044;
+  background:#020617;color:#e5e7eb
+}
+button{margin-top:14px;font-weight:900;cursor:pointer;
+background:linear-gradient(135deg,#22c55e,#60a5fa);color:#001018}
+.mono{font-family:ui-monospace;word-break:break-all}
+.ok{color:#22c55e;font-weight:900}
+.bad{color:#ef4444;font-weight:900}
+</style>
+</head>
+
+<body>
+<div class="box">
+<h2>🔐 SHA256 Hash Generator (بدون HMAC)</h2>
+
+<label>namespace</label>
+<input id="ns" value="border_company">
+
+<label>version</label>
+<input id="ver" value="v1">
+
+<label>NDCid</label>
+<input id="ndc" value="2653">
+
+<label>Target hash_code (اختياري)</label>
+<input id="target" class="mono"
+value="9ab5cb4ad5f87cee39d4c15f261a8914db6124b3c37f36cbbba2430d1fab0493">
+
+<button onclick="run()">توليد والتحقق</button>
+
+<div style="margin-top:14px">
+<b>Canonical String</b>
+<div id="canonical" class="mono"></div>
+</div>
+
+<div style="margin-top:14px">
+<b>SHA256 Result</b>
+<div id="out" class="mono"></div>
+<div id="status"></div>
+</div>
+</div>
+
+<script>
+function hex(buf){
+  return [...new Uint8Array(buf)]
+    .map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+async function sha256(str){
+  const data=new TextEncoder().encode(str);
+  const hash=await crypto.subtle.digest("SHA-256",data);
+  return hex(hash);
+}
+
+async function run(){
+  const ns=nsEl.value.trim();
+  const ver=verEl.value.trim();
+  const ndc=ndcEl.value.trim();
+  const target=targetEl.value.trim().toLowerCase();
+
+  if(!/^\d+$/.test(ndc)){
+    status.innerHTML="<span class='bad'>❌ NDCid لازم رقم</span>";
+    return;
+  }
+
+  const canonical=`${ns}|${ver}|${ndc}`;
+  canonicalEl.textContent=canonical;
+
+  const h=await sha256(canonical);
+  out.textContent=h;
+
+  if(target && h===target){
+    status.innerHTML="<span class='ok'>✅ MATCH – نفس الهاش الهدف</span>";
+  }else if(target){
+    status.innerHTML="<span class='bad'>❌ غير مطابق</span>";
+  }else{
+    status.innerHTML="";
+  }
+}
+
+const nsEl=ns, verEl=ver, ndcEl=ndc, targetEl=target;
+const canonicalEl=document.getElementById("canonical");
+const out=document.getElementById("out");
+const status=document.getElementById("status");
+</script>
+</body>
+</html>
